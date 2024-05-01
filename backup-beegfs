@@ -1,0 +1,71 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+
+
+# Change to reflect your system.
+BEEGFS_MGMTD_HOST=storage01
+BEEGFS_META_HOSTS=( storage01 storage02 )
+BEEGFS_STORAGE_HOSTS=( storage01 storage02 storage03 storage04 storage05 storage06 storage07 storage08 )
+BEEGFS_CLIENT_HOSTS=( hcux400 compute02 compute03 compute04 compute05 compute06 compute07 compute08 compute09 compute10 compute21 0 )
+
+
+mkdir -p client
+#rsync -a "${BEEGFS_CLIENT_HOSTS[0]}":/etc/beegfs/ client/etc_beegfs/
+rsync -a /etc/beegfs/ client/etc_beegfs/
+exit
+
+ids=( $BEEGFS_MGMTD_HOST "${BEEGFS_META_HOSTS[@]}" "${BEEGFS_STORAGE_HOSTS[@]}" )
+sorted_unique_ids=($(echo "${ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+for i in ${sorted_unique_ids[@]}; do
+  mkdir -p  $i/etc_beegfs ;
+  rsync -a $i:/etc/beegfs/ $i/etc_beegfs/;
+done
+
+
+for host in "${BEEGFS_CLIENT_HOSTS[@]}"  "${BEEGFS_STORAGE_HOSTS[@]}"; do
+   ssh "root@${host}" systemctl stop beegfs-client
+   ! ( ssh "root@${host}" 'mount | grep beegfs' \
+       && echo "BeeGFS mount on ${host} failed to unmount." )
+done
+
+for host in "${BEEGFS_META_HOSTS[@]}"; do
+   ssh "root@${host}" systemctl stop beegfs-meta
+done
+
+for host in "${BEEGFS_STORAGE_HOSTS[@]}"; do
+   ssh "root@${host}" systemctl stop beegfs-storage
+done
+
+for host in "${BEEGFS_MGMTD_HOST}"; do
+   ssh "root@${host}" systemctl stop beegfs-mgmtd
+done
+
+
+cat << 'EOF' > "$BEEGFS_MGMTD_HOST"/backup-mgt
+now=$(date +'%F_%T')
+tar cpzf "/root/mgmtd_storagedir_${now}.tar.gz" /var/beegfs/mgmtd
+tar cpzf "/root/mgmtd_storagedir_${now}_xattr.tar.gz" /var/beegfs/mgmtd  --xattrs
+scp  "/root/mgmtd_storagedir_${now}.tar.gz"       hcux400:/home/slinxglobal/beegfs-migration/
+scp  "/root/mgmtd_storagedir_${now}_xattr.tar.gz" hcux400:/home/slinxglobal/beegfs-migration/
+EOF
+
+scp  "$BEEGFS_MGMTD_HOST"/backup-mgt  "$BEEGFS_MGMTD_HOST":/root/backup-mgt
+
+
+cat << 'EOF' > storage01/backup-metadata
+#!/bin/bash
+tar -cf - /data/metadata  --xattrs | ssh hcux400 "cat > /home/slinxglobal/beegfs-migration/storage01/meta_storage01.tgz"
+EOF
+scp storage01/backup-metadata storage01:/root/
+
+cat << 'EOF' > storage02/backup-metadata
+#!/bin/bash
+tar -cf - /data/metadata  --xattrs | ssh hcux400 "cat > /home/slinxglobal/beegfs-migration/storage02/meta_storage02.tgz"
+EOF
+scp storage02/backup-metadata storage02:/root/
+
+ssh storage01 "bash /root/backup-metadata"
+ssh storage02 "bash /root/backup-metadata"
