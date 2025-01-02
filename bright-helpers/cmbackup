@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+NOW=$(date +%Y%m%d)
+ME=$(hostname -s | cut -f 1 -d .)
+#Keep backups for x days
+AGE=1000
+
+mkdir -p /cm/shared/backups/${ME}/${NOW}
+rsync -a /var/spool/cmd/backup/ /cm/shared/backups/${ME}/${NOW}/
+
+find /cm/shared/backups/${ME} -mtime +"${AGE}" -type f -delete
