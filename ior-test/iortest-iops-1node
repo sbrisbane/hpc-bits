@@ -1,0 +1,11 @@
+#!/bin/bash
+BLOCK_SIZE="6400000000k"
+#BLOCK_SIZE="64000000k"
+#BLOCK_SIZE="4k"
+module load mpich/ge/gcc/64
+module load spack
+source /cm/shared/apps/spack/share/spack/setup-env.sh
+
+module load ior
+ mpirun --prefix /cm/shared/apps/openmpi4/gcc/4.1.5/ -x PATH -hostfile /home/hpc/slxhpc/onenodes --map-by node -np 1 \
+         `which ior` -a POSIX -b  ${BLOCK_SIZE} -w -r -i1 -t4k  -g -F -o /mnt/active/routine/ior/ior
