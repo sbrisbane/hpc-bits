@@ -5,17 +5,32 @@
 ############################
 
 #### CELL2 #################
+import keras
 import os
-os.environ["KERAS_BACKEND"] = "jax"
+#Change to 0 if you are running a tensorflow back end
+with_jax=1
+if with_jax:
+  import jax
+  import jax.numpy as np
+  print (jax.devices())
+  os.environ["KERAS_BACKEND"] = "jax"
+else:
+  import tensorflow
+
+  import numpy as np 
+
+
+
 from matplotlib import pyplot as plt
 import numpy as np
 import keras
+from  keras.datasets import mnist as mnist
 # Model / data parameters
 num_classes = 10
 input_shape = (28, 28, 1)
 
 # Load the data and split it between train and test sets
-(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
 # Scale images to the [0, 1] range
 x_train = x_train.astype("float32") / 255
@@ -32,11 +47,6 @@ plt.show()
 
 #### CELL3 #################
 
-import jax
-import jax.numpy as np
-print (jax.devices())
-
-import keras
 from keras import Sequential
 from keras import layers
 
@@ -84,5 +94,3 @@ score = model.evaluate(x_test, y_test, verbose=0)
 print("Test loss:", score[0])
 print("Test accuracy:", score[1])
 ############################
-
-
