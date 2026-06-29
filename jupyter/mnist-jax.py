@@ -10,17 +10,26 @@ import os
 #Change to 0 if you are running a tensorflow back end
 with_jax=0
 #support setting this from calling script also
-if os.environ["KERAS_BACKEND"] == "jax":
+#tensorflow or jax, tf is the default
+
+KERAS_BACKEND=  os.getenv("KERAS_BACKEND", "tensorflow")
+
+if KERAS_BACKEND == "jax":
    with_jax=1
 
 if with_jax:
+  print ("with jax")
   import jax
   import jax.numpy as np
   print (jax.devices())
   os.environ["KERAS_BACKEND"] = "jax"
 else:
   import tensorflow
-  import numpy as np 
+
+  import numpy as np
+  os.environ["KERAS_BACKEND"] = "tensorflow"
+
+
 
 
 
