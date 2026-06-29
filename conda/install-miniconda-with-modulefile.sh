@@ -11,7 +11,7 @@ ROOT=/apps/software/el9/miniconda3
 VER=$NOW
 mkdir -p  $ROOT/build  $ROOT/$VER
 
-$NOINSTALL wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /apps/software/el9/miniconda3/build/miniconda-installer.sh
+$NOINSTALL wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $ROOT/build/miniconda-installer.sh
 $NOINSTALL bash $ROOT/build/miniconda-installer.sh -b -u -p $ROOT/$VER
 
 
