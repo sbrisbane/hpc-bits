@@ -8,7 +8,11 @@
 import keras
 import os
 #Change to 0 if you are running a tensorflow back end
-with_jax=1
+with_jax=0
+#support setting this from calling script also
+if os.environ["KERAS_BACKEND"] == "jax":
+   with_jax=1
+
 if with_jax:
   import jax
   import jax.numpy as np
@@ -16,7 +20,6 @@ if with_jax:
   os.environ["KERAS_BACKEND"] = "jax"
 else:
   import tensorflow
-
   import numpy as np 
 
 
