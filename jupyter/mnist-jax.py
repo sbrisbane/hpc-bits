@@ -23,6 +23,8 @@ if with_jax:
   import jax.numpy as np
   print (jax.devices())
   os.environ["KERAS_BACKEND"] = "jax"
+  ##Set this if you need to share the MIG slice (eg for slighyl less than 1/3 of the memory)
+  #os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.3"
 else:
   import tensorflow
 
