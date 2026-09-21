@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="/path/to/search"
+root=.
+
+#CSV files need to be in following format
+# Format: source_UID:target_UID
+#owner_map=(
+#  "501,1000"
+#  "1000,1002"
+#  "2002,2001"
+#)
+# Format: source_GID:target_GID
+#group_map=(
+#  "20,1000"
+#  "1000,1002"
+#  "2002,3001"
+#)
+
+if  (( $# != 3 )) ;then
+ echo usage $0 root_dir user_map.csv group_map.csv
+ echo Note that this script will traverse filesystems
+ exit 1
+fi
+root="$1"
+uid_map_file="$2"
+gid_map_file="$3"
+
+
+declare -A uid_map gid_map #batch_count
+
+load_map() {
+  local file="$1"
+  local map_name="$2"
+  local line source target
+  declare -n map="$map_name"
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+ #   echo 1
+    line="${line%$'\r'}" # Supports Windows CSV line endings.
+    echo $line
+    [[ "$line" =~ ^[[:space:]]*$ || "$line" =~ ^[[:space:]]*# ]] && continue
+    echo $line
+    if [[ "$line" =~ ^[[:space:]]*([0-9]+)[[:space:]]*,[[:space:]]*([0-9]+)[[:space:]]*$ ]]; then
+      source="${BASH_REMATCH[1]}"
+      target="${BASH_REMATCH[2]}"
+      map["$source"]="$line"
+    else
+      printf 'Invalid mapping in %s: %s\n' "$file" "$line" >&2
+      exit 1
+    fi
+#  echo line $line "${map[@]}"
+  done < "$file"
+
+}
+
+load_map "$uid_map_file" uid_map
+load_map "$gid_map_file" gid_map
+expression=( "("  )
+expression+=( "(" )
+echo ${uid_map[@]}
+first=1
+
+for mapping in "${uid_map[@]}"; do
+  [[ "$mapping" =~ ^[0-9]+,[0-9]+$ ]] ||
+    { echo "Invalid uid mapping: $mapping" >&2; exit 1; }
+
+  
+  source_uid="${mapping%%,*}"
+  target_uid="${mapping#*,}"
+
+  if (( first )); then
+    first=0
+  else
+    expression+=( -o )
+  fi
+
+  expression+=(
+    "("
+      -uid "$source_uid"
+      -exec chown --no-dereference "$target_uid" "{}" +
+    ")"
+  )
+done
+
+expression+=( ")" )
+expression+=( "," ) 
+expression+=( "(" ) 
+first=1
+
+
+for mapping in "${gid_map[@]}"; do
+  [[ "$mapping" =~ ^[0-9]+,[0-9]+$ ]] ||
+    { echo "Invalid group mapping: $mapping" >&2; exit 1; }
+
+  source_gid="${mapping%%,*}"
+  target_gid="${mapping#*,}"
+
+  if (( first )); then
+    first=0
+  else
+    expression+=( -o )
+  fi
+
+  expression+=(
+    "("
+      -gid "$source_gid"
+      -exec chgrp --no-dereference "$target_gid" "{}" +
+    ")"
+  )
+done
+
+expression+=( ")" )
+expression+=( ")" )
+pwd
+echo find "$root" "${expression[@]}"
+find "$root" "${expression[@]}"
