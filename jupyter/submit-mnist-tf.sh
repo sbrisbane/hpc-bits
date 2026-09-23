@@ -4,7 +4,13 @@
 #REQUIREMENTS
 #conda create -n tf-keras
 #conda activate tf-keras
-#conda install -c nvidia -c conda-forge -c defaults matplotlib keras tensorflow-gpu ##conda install -c nvidia -c conda-forge -c defaults nvidia::cuda-toolkit nvidia::cuda-nvcc
+#conda install -c nvidia -c conda-forge -c defaults matplotlib keras tensorflow-gpu 
+#conda install -c nvidia -c conda-forge -c defaults nvidia::cuda-toolkit nvidia::cuda-nvcc
+
+#or
+
+#pip install ipykernel keras "jax[cuda12]" matplotlib # assuming you are running against cuda 12 drivers (A100. H100)
+#use 13 if B100+
 
 module load miniconda3
 conda activate tf-keras
