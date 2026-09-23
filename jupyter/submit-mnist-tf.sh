@@ -9,8 +9,8 @@
 
 #or
 
-#pip install ipykernel keras "jax[cuda12]" matplotlib # assuming you are running against cuda 12 drivers (A100. H100)
-#use 13 if B100+
+#pip install ipykernel keras "jax[cuda12]" tensorflow matplotlib # assuming you are running against cuda 12 drivers (A100. H100)
+#use jax[13] if B100+
 
 module load miniconda3
 conda activate tf-keras
