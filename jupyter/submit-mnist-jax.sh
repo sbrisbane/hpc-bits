@@ -9,6 +9,10 @@
 #conda install -c nvidia -c conda-forge -c defaults python=3.13 matplotlib keras 
 #pip install "jax[cuda13]"
 
+#all pip
+#pip install ipykernel keras "jax[cuda12]" tensorflow matplotlib # assuming you are running against cuda 12 drivers (A100. H100)
+#use jax[13] if B100+
+
 #May be required if no system cuda nvcc libs exist
 export XLA_FLAGS="--xla_gpu_cuda_data_dir=$CONDA_PREFIX"
 
